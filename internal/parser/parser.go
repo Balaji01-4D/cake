@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -8,6 +9,8 @@ import (
 	goMake "github.com/unmango/go-make"
 	"github.com/unmango/go-make/ast"
 )
+
+var ErrNoTargets = errors.New("")
 
 func ParseMakefile(r io.Reader) ([]*MakeTarget, error) {
 	p := goMake.NewParser(r, nil)
@@ -52,6 +55,10 @@ func ParseMakefile(r io.Reader) ([]*MakeTarget, error) {
 	var targets []*MakeTarget
 	for _, targetName := range targetOrder {
 		targets = append(targets, targetMap[targetName])
+	}
+
+	if len(targets) == 0 {
+		return nil, ErrNoTargets
 	}
 
 	return targets, nil

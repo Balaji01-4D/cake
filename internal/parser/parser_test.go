@@ -19,7 +19,8 @@ func TestParseMakefile_EmptyFile(t *testing.T) {
 	defer r.Close()
 
 	targets, err := parser.ParseMakefile(r)
-	require.NoError(t, err)
+	require.Error(t, err)
+	require.Equal(t, parser.ErrNoTargets, err)
 	require.Empty(t, targets, "expected no targets for an empty Makefile")
 }
 
