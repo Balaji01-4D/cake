@@ -12,7 +12,6 @@ import (
 
 const testDataPath = "testdata"
 
-
 func TestParseMakefile_EmptyFile(t *testing.T) {
 	makefilePath := filepath.Join(testDataPath, "empty_makefile.mk")
 	r, err := os.Open(makefilePath)

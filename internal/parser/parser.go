@@ -57,13 +57,12 @@ func ParseMakefile(r io.Reader) ([]*MakeTarget, error) {
 	return targets, nil
 }
 
-
 func recipieLines(recipes []*ast.Recipe) []string {
 	var lines []string
 	for _, recipe := range recipes {
 		lines = append(lines, fmt.Sprint(recipe))
 	}
-	return lines	
+	return lines
 }
 
 func toStringSlice(exprs []ast.Expr) []string {
