@@ -4,7 +4,11 @@ import (
 	"context"
 	"os"
 
+	tea "charm.land/bubbletea/v2"
+	"github.com/balaji01-4d/cake/internal/app"
 	"github.com/balaji01-4d/cake/internal/logger"
+	"github.com/balaji01-4d/cake/internal/parser"
+	"github.com/balaji01-4d/cake/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +29,7 @@ It also provides a live preview of the underlying shell commands for the current
 
 		Args: cobra.MaximumNArgs(1),
 
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 			logger, err := logger.New(bool(debug))
 			if err != nil {
 				return err
@@ -35,7 +39,7 @@ It also provides a live preview of the underlying shell commands for the current
 			return nil
 		},
 
-		PreRunE: func(cmd *cobra.Command, args []string) error {
+		PreRunE: func(_ *cobra.Command, args []string) error {
 			if len(args) == 1 {
 				cliCtx.Logger.Debug("User specified Makefile", "Makefile", args[0])
 				arg = args[0]
@@ -47,14 +51,51 @@ It also provides a live preview of the underlying shell commands for the current
 				cliCtx.Logger.Error("Failed to open Makefile", "Makefile", arg, "error", errOpen)
 				return errOpen
 			}
+
+			app := app.Cake{}
+			cliCtx.App = &app
 			return nil
 		},
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
+			targets, err := parser.ParseMakefile(f)
+			if err != nil {
+				cliCtx.Logger.Error("Failed to parse Makefile", "Makefile", arg, "error", err)
+				return err
+			}
+
+			uiModel := ui.New(targets)
+
+			p := tea.NewProgram(uiModel)
+			selectedModel, err := p.Run()
+			if err != nil {
+				cliCtx.Logger.Error("Failed to run TUI", "error", err)
+				return err
+			}
+
+			model, okay := selectedModel.(ui.Model)
+			if !okay {
+				cliCtx.Logger.Error("Failed to cast selected model to UI model")
+				return nil
+			}
+
+			cmd := model.FinalCmd
+			if cmd == "" {
+				cliCtx.Logger.Debug("No command selected, exiting")
+				return nil
+			}
+
+			cliCtx.Logger.Info("Executing command", "command", cmd)
+			err = cliCtx.App.Run(ctx, cmd)
+			if err != nil {
+				cliCtx.Logger.Error("Failed to execute command", "command", cmd, "error", err)
+				return err
+			}
+
 			return nil
 		},
 
-		PostRunE: func(cmd *cobra.Command, args []string) error {
+		PostRunE: func(_ *cobra.Command, _ []string) error {
 			if f == nil {
 				return nil
 			}
