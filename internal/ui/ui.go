@@ -64,6 +64,15 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+func (m Model) selectedTarget() *parser.MakeTarget {
+	item := m.list.SelectedItem()
+	target, ok := item.(*parser.MakeTarget)
+	if !ok || target == nil {
+		return nil
+	}
+	return target
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -74,19 +83,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.FinalCmd = m.Input.Value()
 				return m, tea.Quit
 			}
-			item := m.list.SelectedItem()
-			if item, ok := item.(*parser.MakeTarget); ok {
-				m.CurrentTarget = item
+			if target := m.selectedTarget(); target != nil {
+				m.CurrentTarget = target
 				return m, tea.Quit
 			}
 		} else if msg.String() == "shift+enter" {
 			if m.editCmdDialog {
 				return m, nil
 			}
-			if m.CurrentTarget == nil {
-				m.CurrentTarget = m.list.SelectedItem().(*parser.MakeTarget)
+			target := m.selectedTarget()
+			if target == nil {
+				return m, nil
 			}
-			m.Input.SetValue("make" + m.CurrentTarget.Name)
+			m.CurrentTarget = target
+			m.Input.SetValue("make " + target.Name)
 			m.editCmdDialog = true
 			m.Input.Focus()
 			return m, nil
