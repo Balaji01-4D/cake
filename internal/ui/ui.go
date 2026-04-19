@@ -35,15 +35,23 @@ type Model struct {
 	CurrentTarget *parser.MakeTarget
 	Input         textinput.Model
 	editCmdDialog bool
+	baseCmdPrefix string
 	FinalCmd      string
 	width, height int
 }
 
-func New(items []*parser.MakeTarget) tea.Model {
+func New(items []*parser.MakeTarget, defaultCmdPrefix string) tea.Model {
 	listItems := make([]list.Item, len(items))
 	for i, item := range items {
 		listItems[i] = item
 	}
+
+	defaultCmdPrefix = strings.TrimSpace(defaultCmdPrefix)
+	if defaultCmdPrefix == "" {
+		defaultCmdPrefix = "make"
+	}
+	defaultCmdPrefix += " "
+
 	i := textinput.New()
 	i.Placeholder = "Edit command..."
 	i.CharLimit = 256
@@ -54,8 +62,9 @@ func New(items []*parser.MakeTarget) tea.Model {
 	l.Title = "Targets"
 	l.SetFilteringEnabled(false)
 	m := Model{
-		list:  l,
-		Input: i,
+		list:          l,
+		Input:         i,
+		baseCmdPrefix: defaultCmdPrefix,
 	}
 	return m
 }
@@ -73,6 +82,10 @@ func (m Model) selectedTarget() *parser.MakeTarget {
 	return target
 }
 
+func (m Model) commandForTarget(targetName string) string {
+	return m.baseCmdPrefix + targetName
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
@@ -85,6 +98,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			if target := m.selectedTarget(); target != nil {
 				m.CurrentTarget = target
+				m.FinalCmd = m.commandForTarget(target.Name)
 				return m, tea.Quit
 			}
 		} else if msg.String() == "shift+enter" {
@@ -96,7 +110,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			m.CurrentTarget = target
-			m.Input.SetValue("make " + target.Name)
+			m.Input.SetValue(m.commandForTarget(target.Name))
 			m.editCmdDialog = true
 			m.Input.Focus()
 			return m, nil

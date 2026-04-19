@@ -2,7 +2,9 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/balaji01-4d/cake/internal/app"
@@ -11,6 +13,7 @@ import (
 	"github.com/balaji01-4d/cake/internal/ui"
 	"github.com/spf13/cobra"
 )
+
 
 func NewRootCommand(ctx context.Context, cliCtx CLIContext) *cobra.Command {
 	var debug debugFlag
@@ -64,7 +67,8 @@ It also provides a live preview of the underlying shell commands for the current
 				return err
 			}
 
-			uiModel := ui.New(targets)
+			cmdPrefix := defaultMakeCommandPrefix(arg)
+			uiModel := ui.New(targets, cmdPrefix)
 
 			p := tea.NewProgram(uiModel)
 			selectedModel, err := p.Run()
@@ -79,10 +83,13 @@ It also provides a live preview of the underlying shell commands for the current
 				return nil
 			}
 
-			cmd := model.FinalCmd
+			cmd := strings.TrimSpace(model.FinalCmd)
 			if cmd == "" {
-				cliCtx.Logger.Debug("No command selected, exiting")
-				return nil
+				if model.CurrentTarget == nil {
+					cliCtx.Logger.Debug("No command selected, exiting")
+					return nil
+				}
+				cmd = cmdPrefix + " " + model.CurrentTarget.Name
 			}
 
 			cliCtx.Logger.Info("Executing command", "command", cmd)
@@ -112,4 +119,11 @@ It also provides a live preview of the underlying shell commands for the current
 
 	debug.bind(cmd)
 	return cmd
+}
+
+func defaultMakeCommandPrefix(makefilePath string) string {
+	if strings.TrimSpace(makefilePath) == "" || makefilePath == "Makefile" {
+		return "make"
+	}
+	return fmt.Sprintf("make -f %q", makefilePath)
 }
