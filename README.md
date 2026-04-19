@@ -35,8 +35,3 @@ You can track planned milestones and scope in [plans.md](./plans.md).
 make build
 ./bin/cake
 ```
-
-## Screenshots & Demo (placeholders)
-
-![Cake main UI screenshot placeholder](./assets/screenshots/cake-main-ui.png)
-![Cake demo GIF placeholder](./assets/gifs/cake-demo.gif)
