@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 func NewRootCommand(ctx context.Context, cliCtx CLIContext) *cobra.Command {
 	var debug debugFlag
 	var f *os.File
