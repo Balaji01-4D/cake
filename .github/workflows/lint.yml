@@ -1,7 +1,17 @@
 name: lint
 on:
   push:
+    paths:
+      - 'go.mod'
+      - 'go.sum'
+      - 'internal/**'
+      - 'cmd/**'
   pull_request:
+    paths:
+      - 'go.mod'
+      - 'go.sum'
+      - 'internal/**'
+      - 'cmd/**'
 
 permissions:
   contents: read
@@ -16,7 +26,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v6
         with:
-          go-version: 1.25.5
+          go-version: 1.25.x
 
       - uses: actions/checkout@v5
       - name: golangci-lint
